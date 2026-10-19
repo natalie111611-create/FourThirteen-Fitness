@@ -1,11 +1,11 @@
 {
-  "name": "Home Camp Builder",
-  "short_name": "Home Camp",
+  "name": "413 Fitness",
+  "short_name": "413",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#FBF7FA",
-  "theme_color": "#D6336C",
+  "background_color": "#F6F4EF",
+  "theme_color": "#F6F4EF",
   "icons": [
     {
       "src": "icon-192.png",
