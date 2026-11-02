@@ -528,8 +528,48 @@ button.brand{background:none;border:0;padding:4px 2px;color:var(--ink);cursor:po
 .ci .cil{border-color:rgba(0,0,0,.06)}
 .tile b.mb{font-size:1.25rem}
 #v-week .tseg,#v-favs .tseg{margin-bottom:14px}
+
+/* ---------- Drop 4: account, questionnaire ---------- */
+.ovl{position:fixed;inset:0;z-index:70;background:var(--bg);overflow:auto;overscroll-behavior:contain}
+.ovl[hidden]{display:none}
+.ovl-in{max-width:460px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 28px) 20px calc(40px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:12px;min-height:100%}
+.ovl-in h2{font-size:2.3rem;margin:6px 0 0}
+.qsub{color:var(--muted);margin:0;font-size:.95rem}
+.qlab{display:flex;flex-direction:column;gap:6px;font-size:.8rem;color:var(--muted);min-width:0}
+.qlab input,.authbox input{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:13px 14px;font-size:16px;color:var(--ink);width:100%;min-width:0}
+.authbrand{display:flex;align-items:baseline;justify-content:center;font:500 4.2rem/1 var(--display);margin:24px 0 6px}
+.authbrand .x{height:.64em;width:.167em;margin:0 .09em;fill:#9A9691}
+.gbtn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;border-color:var(--line);background:var(--surface)}
+.gbtn svg{width:18px;height:18px}
+.ordiv{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:.78rem}
+.ordiv::before,.ordiv::after{content:"";flex:1;height:1px;background:var(--line)}
+.autherr{margin:0;font-size:.88rem;color:var(--ink);font-weight:600;text-align:center}
+.authlinks{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.obdots{display:flex;gap:6px;margin-bottom:4px}
+.obdots i{flex:1;height:3px;border-radius:2px;background:var(--line)}
+.obdots i.on{background:var(--ink)}
+.obnav{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:auto;padding-top:18px}
+.obnav .btn.pri{min-width:140px;padding:14px 22px}
+.optlist{display:flex;flex-direction:column;gap:8px}
+.optc{display:flex;align-items:center;gap:14px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;cursor:pointer;color:var(--ink)}
+.optc b{display:block;font:600 1.2rem var(--display)}
+.optc small{color:var(--muted);font-size:.8rem}
+.ock{width:22px;height:22px;border-radius:6px;border:1.5px solid var(--line);flex:none;display:grid;place-items:center}
+.optc[aria-pressed="true"]{border-color:var(--ink)}
+.optc[aria-pressed="true"] .ock{background:var(--ink);border-color:var(--ink)}
+.optc[aria-pressed="true"] .ock::after{content:"";width:10px;height:5px;border:2px solid var(--on-accent);border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px)}
+.acct{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin-bottom:8px}
+.acct>div{min-width:0;display:flex;flex-direction:column;gap:2px}
+.acct b{font-size:.9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acct small{font-size:.74rem;color:var(--muted)}
+#pfBody{gap:10px}
+.tiles>:only-child{grid-column:1/-1}
 *,*::before,*::after{font-feature-settings:"lnum" 1!important}
 </style>
+<script src="fb/firebase-app-compat.js"></script>
+<script src="fb/firebase-auth-compat.js"></script>
+<script src="fb/firebase-firestore-compat.js"></script>
+<script>window.FB_CONFIG={apiKey:"AIzaSyD4e78gFehxwAP5WHHKvJRTG6eU_LGUJeQ",authDomain:"fitness-50ea7.firebaseapp.com",projectId:"fitness-50ea7",storageBucket:"fitness-50ea7.firebasestorage.app",messagingSenderId:"126646307436",appId:"1:126646307436:web:79fc9bc46b882ef29ea649"};</script>
 </head>
 <body>
 <header class="bar"><div class="wrap">
@@ -582,13 +622,15 @@ button.brand{background:none;border:0;padding:4px 2px;color:var(--ink);cursor:po
 
 <div id="drawer" hidden><div class="dr-scrim" data-close></div><div class="dr-in" role="dialog" aria-modal="true" aria-label="Menu">
   <div class="dr-top"><span class="brand">4<svg class="x" viewBox="0 0 26 100" aria-hidden="true"><rect x="10.5" y="22" width="5" height="70"/><rect x="0" y="37.5" width="26" height="5"/></svg>13</span><button class="icon" data-close aria-label="Close menu"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-  <span class="eyebrow">Food &amp; progress</span>
+  <div id="acctBody"></div>
+  <div class="menu"><button data-go="profile"><span><span class="t2">My profile &amp; features</span><small>Name, which tabs show, dumbbells</small></span><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button></div>
+  <span class="eyebrow" style="margin-top:14px">Food &amp; progress</span>
   <div class="menu">
     <button data-go="goals"><span><span class="t2">Nutrition goals</span><small>Calories, macro split, water, diet breaks</small></span><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
     <button data-go="checkin"><span><span class="t2">Weekly check-in</span><small>Last week's averages, trend, and pace</small></span><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
     <button data-go="report"><span><span class="t2">Monthly report</span><small>Weight, measurements, food, camps, tags</small></span><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
   </div>
-  <span class="eyebrow" style="margin-top:14px">Library</span>
+  <span class="eyebrow" style="margin-top:14px" id="libEyebrow">Library</span>
   <div class="menu">
     <button data-go="moves"><span><span class="t2">All exercises</span><small>Search moves, see your last and best weights</small></span><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
     <button data-go="protocols"><span><span class="t2">Protocols</span><small>What each day type trains</small></span><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
@@ -676,6 +718,12 @@ button.brand{background:none;border:0;padding:4px 2px;color:var(--ink);cursor:po
   <div id="goalsBody"></div>
 </section>
 
+<section id="v-profile" hidden>
+  <button class="back" data-menu><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>Menu</button>
+  <h2>My profile &amp; features</h2>
+  <div id="pfBody" class="nform"></div>
+</section>
+
 <section id="v-checkin" hidden>
   <button class="back" data-menu><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>Menu</button>
   <h2>Weekly check-in</h2>
@@ -701,11 +749,30 @@ button.brand{background:none;border:0;padding:4px 2px;color:var(--ink);cursor:po
   <button data-tab="cal"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>Calendar</button>
 </div></nav>
 
+<div id="auth" class="ovl" hidden><div class="ovl-in" id="authIn"></div></div>
+<div id="onb" class="ovl" hidden><div class="ovl-in" id="onbIn"></div></div>
+
 <div id="sheet" class="sheet" hidden role="dialog" aria-modal="true" aria-label="Add food"><div class="sheet-in" id="sheetIn"></div></div>
 
 <div id="run" hidden role="dialog" aria-modal="true" aria-label="Workout in progress"><div class="run-in" id="runIn"></div></div>
 
 <script>
+/* ---------- SYNC: track every saved change (pushed once signed in) ---------- */
+const SYNC_ON=!!(window.firebase&&window.FB_CONFIG);
+const syncable=k=>/^(homecamp\.|413\.)/.test(k)&&!/^(homecamp\.run$|413\.preupdate$|413\.appv$|413\.sync\.|413\.lastBackup$|413\.backupSnooze$)/.test(k);
+const _lsSet=Storage.prototype.setItem, _lsRm=Storage.prototype.removeItem;
+let syncMeta={}, syncDirty=new Set(), syncApplying=false;
+try{ syncMeta=JSON.parse(localStorage.getItem("413.sync.meta"))||{}; syncDirty=new Set(JSON.parse(localStorage.getItem("413.sync.dirty"))||[]); }catch(e){}
+function markDirty(k){
+  syncMeta[k]=Date.now(); syncDirty.add(k);
+  try{ _lsSet.call(localStorage,"413.sync.meta",JSON.stringify(syncMeta)); _lsSet.call(localStorage,"413.sync.dirty",JSON.stringify([...syncDirty])); }catch(e){}
+  if(typeof schedulePush==="function") schedulePush();
+}
+if(SYNC_ON){
+  Storage.prototype.setItem=function(k,v){ const same=this===localStorage&&this.getItem(k)===String(v); _lsSet.call(this,k,v); if(this===localStorage&&!same&&!syncApplying&&syncable(k)) markDirty(k); };
+  Storage.prototype.removeItem=function(k){ const had=this===localStorage&&this.getItem(k)!=null; _lsRm.call(this,k); if(had&&!syncApplying&&syncable(k)) markDirty(k); };
+}
+
 /* ---------- DATA ---------- */
 // [name, patterns, equipment, description, swap note or "", named in a Burn source?]
 const EX = [
@@ -1018,6 +1085,7 @@ let view="home";
 const TAB_OF={home:"home",day:"",week:"week",favs:"week",cal:"cal",report:"cal",food:"food",goals:"food",body:"body",checkin:"home"};
 function showView(v){
   if(typeof closeDrawer==="function") closeDrawer();
+  if(typeof VIEW_NEEDS!=="undefined"&&VIEW_NEEDS[v]&&!uses(VIEW_NEEDS[v])) v="home";
   view=v;
   document.querySelectorAll("main > section").forEach(s=>s.hidden=s.id!=="v-"+v);
   document.querySelectorAll(".tabs button").forEach(b=>{ if(b.dataset.tab===TAB_OF[v]) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
@@ -1033,6 +1101,7 @@ function refreshView(){
   else if(view==="food") renderFood();
   else if(view==="goals"){ gEdit=null; renderGoals(); }
   else if(view==="body") renderBody();
+  else if(view==="profile"){ PF=null; renderProfileView(); }
   else if(view==="checkin"){ ciMon=null; renderCheckin(); }
   else if(view==="report"){ repM=null; renderReport(); }
 }
@@ -1945,7 +2014,7 @@ function chartSVG(){
    <polyline points="${avg.map(p=>`${X(p[0])},${Y(p[1])}`).join(" ")}" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
    <circle cx="${X(lp[0])}" cy="${Y(lp[1])}" r="4.5" fill="var(--ink)"/>
    <text x="${L}" y="${H-6}" font-size="10" fill="var(--muted)">${esc(shortDate(pts[0][2]))}</text><text x="${W-R}" y="${H-6}" text-anchor="end" font-size="10" fill="var(--muted)">${esc(shortDate(lp[2]))}</text></svg>
-   <p class="sync" style="margin:4px 0 0">Dots are weigh-ins. The line is your 7-day average.${Object.values(tags).some(t=>t.includes("Period"))?" Shaded days are period days.":""}</p>`;
+   <p class="sync" style="margin:4px 0 0">Dots are weigh-ins. The line is your 7-day average.${periodOn()&&Object.values(tags).some(t=>t.includes("Period"))?" Shaded days are period days.":""}</p>`;
 }
 function renderBody(){
   const today=dk(new Date()), ks=Object.keys(bw).sort(), cur=ks.length?bw[ks[ks.length-1]]:null;
@@ -2016,7 +2085,7 @@ function renderBackup(){
    <p class="sync" style="margin:0">Free key from <a href="https://fdc.nal.usda.gov/api-key-signup" target="_blank" rel="noopener">fdc.nal.usda.gov/api-key-signup</a>. Without one, searches are limited to about 30 an hour.</p>`;
 }
 let restorePending=null;
-const APPV="4";
+const APPV="5";
 try{ const pv=localStorage.getItem("413.appv"); if(pv!==APPV){ const d=backupData(); if(pv&&Object.keys(d.data).length) localStorage.setItem("413.preupdate",JSON.stringify(Object.assign(d,{fromVersion:pv}))); localStorage.setItem("413.appv",APPV); } }catch(e){}
 document.addEventListener("click",e=>{
   const b=e.target.closest("button"); if(!b) return;
@@ -2031,6 +2100,7 @@ document.addEventListener("change",async e=>{
   if(e.target.id==="bkFile"&&e.target.files[0]){ try{ const j=JSON.parse(await e.target.files[0].text()); if(!j||!j.data) throw 0; restorePending=j; renderBackup(); }catch(err){ toast("That file isn't a 413 backup"); } }
 });
 function backupNudge(){
+  if(typeof syncReady!=="undefined"&&syncReady) return "";
   const has=log.length||flog.length||Object.keys(bw).length; if(!has) return "";
   const t=LSX.get(K.backup,0), sn=LSX.get(K.bkSnooze,0);
   if(Date.now()-t<14*864e5||Date.now()-sn<3*864e5) return "";
@@ -2043,7 +2113,7 @@ $("#sheet").addEventListener("click",e=>{ if(e.target.id==="sheet") closeSheet()
 
 /* ================= DROP 3 ================= */
 /* ---------- menu (tap 413) ---------- */
-function openDrawer(){ const d=$("#drawer"); d.hidden=false; requestAnimationFrame(()=>d.classList.add("open")); $("#menuBtn").setAttribute("aria-expanded","true"); document.body.style.overflow="hidden"; renderBackup(); }
+function openDrawer(){ const d=$("#drawer"); d.hidden=false; requestAnimationFrame(()=>d.classList.add("open")); $("#menuBtn").setAttribute("aria-expanded","true"); document.body.style.overflow="hidden"; renderBackup(); renderAcct(); }
 function closeDrawer(){ const d=$("#drawer"); if(d.hidden) return; d.classList.remove("open"); $("#menuBtn").setAttribute("aria-expanded","false"); document.body.style.overflow=""; setTimeout(()=>{ if(!d.classList.contains("open")) d.hidden=true; },230); }
 $("#menuBtn").addEventListener("click",openDrawer);
 document.addEventListener("click",e=>{ if(e.target.closest("[data-close]")) closeDrawer(); else if(e.target.closest("[data-menu]")) openDrawer(); });
@@ -2060,7 +2130,7 @@ const eaten=d=>flog.filter(e=>e.date===d&&!e.plan);
 const dayTot=d=>eaten(d).reduce((a,e)=>addN(a,entryN(e)),ZERO);
 const tagsFor=d=>tags[d]||[];
 function toggleTag(d,t){ const a=new Set(tagsFor(d)); a.has(t)?a.delete(t):a.add(t); if(a.size) tags[d]=[...a]; else delete tags[d]; LSX.set("413.tags",tags); }
-function tagEditor(d){ return `<div class="chips tagbox" data-tagd="${d}">${tagList.map(t=>`<button class="chip" data-tag="${esc(t)}" aria-pressed="${tagsFor(d).includes(t)}">${esc(t)}</button>`).join("")}${tagNew===d?`<form class="tagform"><input id="tagIn" placeholder="New tag" maxlength="24" aria-label="New tag"><button class="chip">Add</button></form>`:`<button class="chip ghostc" data-tagnew="1">+ Custom</button>`}</div>`; }
+function tagEditor(d){ return `<div class="chips tagbox" data-tagd="${d}">${tagList.filter(t=>t!=="Period"||periodOn()).map(t=>`<button class="chip" data-tag="${esc(t)}" aria-pressed="${tagsFor(d).includes(t)}">${esc(t)}</button>`).join("")}${tagNew===d?`<form class="tagform"><input id="tagIn" placeholder="New tag" maxlength="24" aria-label="New tag"><button class="chip">Add</button></form>`:`<button class="chip ghostc" data-tagnew="1">+ Custom</button>`}</div>`; }
 let tagNew=null;
 function addWater(d,n){ water[d]=Math.max(0,(water[d]||0)+n); if(!water[d]) delete water[d]; LSX.set("413.water",water); }
 function logStreak(){ const days=new Set(flog.filter(e=>!e.plan).map(e=>e.date)); let k=todayK(); if(!days.has(k)) k=addDays(k,-1); let n=0; while(days.has(k)){ n++; k=addDays(k,-1); } return n; }
@@ -2169,12 +2239,12 @@ function renderHome(){
   const ks=Object.keys(bw).sort(), w=bw[today], wk=ks.filter(k=>k<=addDays(today,-7)), wchg=w!=null&&wk.length?r1(w-bw[wk[wk.length-1]]):null;
   const wv=water[today]||0, wg=waterGoal();
   $("#home").innerHTML=`
-   <div class="greet"><span class="eyebrow">${new Date().toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"})}</span><h2>${greeting()}, Nat</h2></div>
-   ${food}
-   ${camp}
+   <div class="greet"><span class="eyebrow">${new Date().toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"})}</span><h2>${greeting()}${PROF().name?", "+esc(PROF().name):""}</h2></div>
+   ${uses("food")?food:""}
+   ${uses("workouts")?camp:""}
    <div class="tiles">
-     <button class="tile tbtn" data-go="body"><small>Weight</small>${w!=null?`<b>${w}</b><small>${wchg!=null?`${wchg>0?"+":""}${wchg} lb this week`:"lb today"}</small>`:`<span class="t2">Log today</span><small>Tap to weigh in</small>`}</button>
-     <div class="tile"><small>Water</small><b>${wv} <span class="of">/ ${wg}</span></b><div class="row" style="justify-content:space-between"><small>glasses</small><button class="icon round pri sm" data-water="1" aria-label="Add a glass of water">+</button></div></div>
+     ${uses("body")?`<button class="tile tbtn" data-go="body"><small>Weight</small>${w!=null?`<b>${w}</b><small>${wchg!=null?`${wchg>0?"+":""}${wchg} lb this week`:"lb today"}</small>`:`<span class="t2">Log today</span><small>Tap to weigh in</small>`}</button>`:""}
+     ${uses("food")?`<div class="tile"><small>Water</small><b>${wv} <span class="of">/ ${wg}</span></b><div class="row" style="justify-content:space-between"><small>glasses</small><button class="icon round pri sm" data-water="1" aria-label="Add a glass of water">+</button></div></div>`:""}
    </div>
    ${checkinCard()}
    ${backupNudge()}`;
@@ -2193,11 +2263,11 @@ function weekStats(monKey){
 }
 function checkinLines(s){
   const L=[];
-  L.push(["Food",s.logged?`Logged ${s.logged} of 7 days · avg ${r0(s.kcal).toLocaleString()} cal${s.goal?` (goal ${r0(s.goal).toLocaleString()})`:""} · ${r0(s.p)} g protein`:"No food logged"]);
-  L.push(["Weight",s.w1!=null?`Avg ${r1(s.w1)} lb${s.chg!=null?` · ${s.chg>0?"+":""}${r1(s.chg)} vs the week before`:""}`:"No weigh-ins"]);
-  L.push(["Camps",`${s.camps} done`]);
-  if(s.water!=null) L.push(["Water",`Avg ${r1(s.water)} glasses on days you tracked`]);
-  const tg=Object.entries(s.tags); if(tg.length) L.push(["Tags",tg.map(([t,n])=>`${t} ${n}d`).join(" · ")]);
+  if(uses("food")) L.push(["Food",s.logged?`Logged ${s.logged} of 7 days · avg ${r0(s.kcal).toLocaleString()} cal${s.goal?` (goal ${r0(s.goal).toLocaleString()})`:""} · ${r0(s.p)} g protein`:"No food logged"]);
+  if(uses("body")) L.push(["Weight",s.w1!=null?`Avg ${r1(s.w1)} lb${s.chg!=null?` · ${s.chg>0?"+":""}${r1(s.chg)} vs the week before`:""}`:"No weigh-ins"]);
+  if(uses("workouts")) L.push(["Camps",`${s.camps} done`]);
+  if(uses("food")&&s.water!=null) L.push(["Water",`Avg ${r1(s.water)} glasses on days you tracked`]);
+  const tg=Object.entries(s.tags).filter(([t])=>t!=="Period"||periodOn()); if(tg.length) L.push(["Tags",tg.map(([t,n])=>`${t} ${n}d`).join(" · ")]);
   return L;
 }
 function checkinNote(s){
@@ -2206,7 +2276,7 @@ function checkinNote(s){
     if(Math.sign(s.chg)===dir&&wk>=.1){ n.push(`At this pace, about ${Math.max(1,Math.round(Math.abs(bgoal-s.w1)/wk))} weeks to ${bgoal} lb.`); if(dir<0&&wk>2) n.push("That's over 2 lb in a week, which is fast. Eating a little more can protect muscle."); }
     else if(s.logged>=5) n.push("Your weight didn't move toward your goal this week. If that happens two weeks in a row, consider adjusting calories by 100 to 150.");
   }
-  if(s.tags.Period&&s.chg>0) n.push("Period days can add a few pounds of water weight, so a small bump this week is expected.");
+  if(periodOn()&&s.tags.Period&&s.chg>0) n.push("Period days can add a few pounds of water weight, so a small bump this week is expected.");
   const m=maintenance(); if(m.ok) n.push(`Estimated maintenance from your logs and weigh-ins: about ${m.tdee.toLocaleString()} cal.`);
   return n;
 }
@@ -2246,12 +2316,12 @@ function renderReport(){
   const sg=v=>(v>0?"+":"")+v;
   $("#repBody").innerHTML=`<div class="daynav"><button class="icon" data-rm="-1" aria-label="Previous month"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><span class="dlab">${esc(s.label)}</span><button class="icon" data-rm="1" aria-label="Next month" ${cur?"disabled":""}><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button></div>
    <div class="tiles">
-     <div class="tile"><small>Weight</small><b>${s.w1!=null?s.w1:"–"}</b><small>${s.w0!=null&&s.wn>1?`${sg(r1(s.w1-s.w0))} lb this month`:"Not enough weigh-ins"}</small></div>
-     <div class="tile"><small>Camps</small><b>${s.camps}</b><small>${s.mins} minutes</small></div>
-     <div class="tile"><small>Avg calories</small><b>${s.kcal!=null?r0(s.kcal).toLocaleString():"–"}</b><small>${s.fdays} of ${s.days} days logged</small></div>
-     <div class="tile"><small>Avg macros</small><b class="mb">${s.p!=null?`${r0(s.p)}P ${r0(s.c)}C ${r0(s.f)}F`:"–"}</b><small>grams a day</small></div>
+     ${uses("body")?"":"<!--"}<div class="tile"><small>Weight</small><b>${s.w1!=null?s.w1:"–"}</b><small>${s.w0!=null&&s.wn>1?`${sg(r1(s.w1-s.w0))} lb this month`:"Not enough weigh-ins"}</small></div>${uses("body")?"":"-->"}
+     ${uses("workouts")?`<div class="tile"><small>Camps</small><b>${s.camps}</b><small>${s.mins} minutes</small></div>`:""}
+     ${uses("food")?"":"<!--"}<div class="tile"><small>Avg calories</small><b>${s.kcal!=null?r0(s.kcal).toLocaleString():"–"}</b><small>${s.fdays} of ${s.days} days logged</small></div>
+     <div class="tile"><small>Avg macros</small><b class="mb">${s.p!=null?`${r0(s.p)}P ${r0(s.c)}C ${r0(s.f)}F`:"–"}</b><small>grams a day</small></div>${uses("food")?"":"-->"}
    </div>
-   <div class="card" style="margin-top:12px"><span class="eyebrow">Measurements</span>${Object.keys(s.mch).length?Object.entries(s.mch).map(([l,v])=>`<div class="cil"><span>${l}</span><span>${sg(v)}"</span></div>`).join(""):`<p class="sync" style="margin:4px 0 0">Log measurements at least twice in a month to see changes.</p>`}</div>
+   ${uses("body")?"":"<!--"}<div class="card" style="margin-top:12px"><span class="eyebrow">Measurements</span>${Object.keys(s.mch).length?Object.entries(s.mch).map(([l,v])=>`<div class="cil"><span>${l}</span><span>${sg(v)}"</span></div>`).join(""):`<p class="sync" style="margin:4px 0 0">Log measurements at least twice in a month to see changes.</p>`}</div>${uses("body")?"":"-->"}
    <div class="card" style="margin-top:12px"><span class="eyebrow">Tags</span>${Object.keys(s.tc).length?Object.entries(s.tc).map(([t,n])=>`<div class="cil"><span>${esc(t)}</span><span>${n} day${n>1?"s":""}</span></div>`).join(""):`<p class="sync" style="margin:4px 0 0">No tagged days.</p>`}</div>
    <button class="btn pri big" id="repShare" style="margin-top:14px;width:100%">Share report</button>`;
   repText=`413 · ${s.label}\nWeight: ${s.w1??"–"} lb${s.w0!=null&&s.wn>1?` (${sg(r1(s.w1-s.w0))} lb)`:""}\nCamps: ${s.camps} (${s.mins} min)\nFood logged: ${s.fdays} of ${s.days} days${s.kcal!=null?`\nAvg: ${r0(s.kcal)} cal · ${r0(s.p)}P ${r0(s.c)}C ${r0(s.f)}F`:""}${Object.keys(s.mch).length?"\nMeasurements: "+Object.entries(s.mch).map(([l,v])=>`${l} ${sg(v)}"`).join(", "):""}`;
@@ -2289,8 +2359,8 @@ function renderCal(){
   let h=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(w=>`<div class="wd">${w}</div>`).join("");
   for(let i=0;i<first;i++) h+=`<div class="cd2 out"></div>`;
   for(let dd=1;dd<=days;dd++){
-    const key=`${pre}-${pad(dd)}`, n=counts[key]||0, tg=tagsFor(key), per=tg.includes("Period"), other=tg.some(t=>t!=="Period");
-    const kc=eaten(key).length?dayTot(key).kcal:0, G=kc?goalsFor(key):null, pct=G?Math.min(100,kc/G.kcal*100):100;
+    const key=`${pre}-${pad(dd)}`, n=counts[key]||0, tg=tagsFor(key), per=periodOn()&&tg.includes("Period"), other=tg.some(t=>t!=="Period");
+    const kc=uses("food")&&eaten(key).length?dayTot(key).kcal:0, G=kc?goalsFor(key):null, pct=G?Math.min(100,kc/G.kcal*100):100;
     h+=`<button class="cd2${n?" did":""}${key===today?" today":""}${key===calSel?" pick":""}${per?" per":""}${key>today?" fut":""}" data-d="${key}" aria-label="${key}${n?", camp done":""}${kc?`, ${r0(kc)} calories`:""}${tg.length?", "+tg.join(", "):""}"><span class="n">${dd}</span><span class="kb">${kc?`<i class="${G&&kc>G.kcal*1.02?"over":""}" style="width:${pct}%"></i>`:""}</span>${other?'<span class="td"></span>':""}</button>`;
   }
   $("#calGrid").innerHTML=h;
@@ -2300,11 +2370,11 @@ function renderCalLog(){
   const items=log.filter(l=>l.date===calSel), label=parseDk(calSel).toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"});
   const fe=eaten(calSel), t=dayTot(calSel), G=goalsFor(calSel), w=bw[calSel], wv=water[calSel];
   const day=`<div class="lc dayc"><span class="eyebrow">${esc(label)}</span>
-    <div class="cil"><span>Food</span><span>${fe.length?`${r0(t.kcal).toLocaleString()}${G?` / ${G.kcal.toLocaleString()}`:""} cal · P ${r0(t.p)} C ${r0(t.c)} F ${r0(t.f)}`:"Nothing logged"}</span></div>
-    <div class="cil"><span>Weight</span><span>${w!=null?w+" lb":"–"}</span></div>
+    ${uses("food")?"":"<!--"}<div class="cil"><span>Food</span><span>${fe.length?`${r0(t.kcal).toLocaleString()}${G?` / ${G.kcal.toLocaleString()}`:""} cal · P ${r0(t.p)} C ${r0(t.c)} F ${r0(t.f)}`:"Nothing logged"}</span></div>${uses("food")?"":"-->"}
+    ${uses("body")?`<div class="cil"><span>Weight</span><span>${w!=null?w+" lb":"–"}</span></div>`:""}
     ${wv?`<div class="cil"><span>Water</span><span>${wv} glasses</span></div>`:""}
     <span class="eyebrow" style="margin-top:6px">Tags</span>${tagEditor(calSel)}
-    <div class="row"><button class="btn ghost" data-fopen="${calSel}">Open food log</button></div></div>`;
+    ${uses("food")?`<div class="row"><button class="btn ghost" data-fopen="${calSel}">Open food log</button></div>`:""}</div>`;
   const ws=items.map(l=>`<div class="lc" data-id="${l.id}">
     <div class="tagline"><span class="pill ${PROTO[l.p]?PROTO[l.p].t:"s"}">${l.early?"Ended early":"Completed"}</span><span class="time">${l.mins} min</span></div>
     <h3>${esc(l.p)}${l.fin?` w/${esc(l.fin)} Finisher`:""}</h3>
@@ -2315,15 +2385,229 @@ function renderCalLog(){
     <label class="datefix"><span class="sync">Logged on the wrong day? Change it:</span><input type="date" class="dmove" value="${l.date}" max="${todayK()}" aria-label="Workout date"></label>
     <div class="row">${delAsk===l.id?`<button class="btn warn" data-del="1">Delete this workout</button><button class="btn ghost" data-keep="1">Keep</button>`:`<button class="btn ghost" data-ask="1">Delete</button>`}</div>
   </div>`).join("");
-  $("#calLog").innerHTML=day+(ws||`<p class="sync" style="text-align:center">No camp logged this day.</p>`);
+  $("#calLog").innerHTML=day+(ws||(uses("workouts")?`<p class="sync" style="text-align:center">No camp logged this day.</p>`:""));
 }
 
 /* ---------- body: tags + period shading ---------- */
-function periodRects(x0,x1,X,T,H,B,W,L,R){ const w=Math.max(3,(W-L-R)/Math.max(1,x1-x0)); return Object.keys(tags).filter(k=>tags[k].includes("Period")).map(k=>{ const x=dayNum(k); return x<x0||x>x1?"":`<rect x="${(X(x)-w/2).toFixed(1)}" y="${T}" width="${w.toFixed(1)}" height="${H-T-B}" fill="var(--soft)"/>`; }).join(""); }
+function periodRects(x0,x1,X,T,H,B,W,L,R){ if(!periodOn()) return ""; const w=Math.max(3,(W-L-R)/Math.max(1,x1-x0)); return Object.keys(tags).filter(k=>tags[k].includes("Period")).map(k=>{ const x=dayNum(k); return x<x0||x>x1?"":`<rect x="${(X(x)-w/2).toFixed(1)}" y="${T}" width="${w.toFixed(1)}" height="${H-T-B}" fill="var(--soft)"/>`; }).join(""); }
+
+
+/* ================= PROFILE & FEATURES ================= */
+const DB_ALL=[2,3,5,8,10,12,15,20,25,30,35,40,45,50];
+let profile=LSX.get("413.profile",null);
+const PROF=()=>profile||{name:"Nat",use:{workouts:true,food:true,body:true},sex:"f",period:true};
+const uses=k=>!!(PROF().use||{})[k];
+const VIEW_NEEDS={week:"workouts",favs:"workouts",day:"workouts",moves:"workouts",protocols:"workouts",workouts:"workouts",finishers:"workouts",swaps:"workouts",food:"food",goals:"food",body:"body"};
+function applyProfile(){
+  const p=PROF();
+  const show={home:1,week:uses("workouts"),food:uses("food"),body:uses("body"),cal:1};
+  let n=0; document.querySelectorAll(".tabs button").forEach(b=>{ b.hidden=!show[b.dataset.tab]; if(!b.hidden) n++; });
+  $(".tabs-in").style.gridTemplateColumns=`repeat(${n},1fr)`;
+  $("#streakChip").hidden=!uses("workouts");
+  document.querySelectorAll("#drawer [data-go]").forEach(b=>{ const need=VIEW_NEEDS[b.dataset.go]; b.hidden=!!need&&!uses(need); });
+  const lib=$("#libEyebrow"); if(lib) lib.hidden=!uses("workouts");
+  if(p.dumbbells&&p.dumbbells.length){ STEPS.length=0; STEPS.push(...p.dumbbells.slice().sort((a,b)=>a-b)); }
+  const lp=document.querySelector(".legend .lg-per"); if(lp) lp.parentElement.hidden=!p.period;
+  const lb=document.querySelector(".legend .lg-bar"); if(lb) lb.parentElement.hidden=!uses("food");
+}
+const periodOn=()=>!!PROF().period;
+
+/* field pieces shared by the questionnaire and the settings page */
+const USE_OPTS=[["workouts","Workouts","Camps, timer, weights, streaks"],["food","Food tracking","Calories, macros, water, nutrients"],["body","Weight & measurements","Weigh-ins, trend chart, measurements"]];
+const fUse=a=>`<div class="optlist">${USE_OPTS.map(([k,l,d])=>`<button type="button" class="optc" data-fuse="${k}" aria-pressed="${!!a.use[k]}"><span class="ock"></span><span><b>${l}</b><small>${d}</small></span></button>`).join("")}</div>`;
+const fSex=a=>`<div class="chips" style="margin:0">${[["f","Female"],["m","Male"]].map(([k,l])=>`<button type="button" class="chip" data-fsex="${k}" aria-pressed="${a.sex===k}">${l}</button>`).join("")}</div>`;
+const fDb=a=>`<div class="chips" style="margin:0">${DB_ALL.map(w=>`<button type="button" class="chip" data-fdb="${w}" aria-pressed="${a.dumbbells.includes(w)}">${w} lb</button>`).join("")}</div>`;
+function formClick(e,a){
+  const u=e.target.closest("[data-fuse]"); if(u){ a.use[u.dataset.fuse]=!a.use[u.dataset.fuse]; return true; }
+  const s=e.target.closest("[data-fsex]"); if(s){ a.sex=s.dataset.fsex; a.period=a.sex==="f"; return true; }
+  const pr=e.target.closest("[data-fper]"); if(pr){ a.period=pr.dataset.fper==="1"; return true; }
+  const d=e.target.closest("[data-fdb]"); if(d){ const w=+d.dataset.fdb, i=a.dumbbells.indexOf(w); i>=0?a.dumbbells.splice(i,1):a.dumbbells.push(w); return true; }
+  return false;
+}
+function saveProfile(a){
+  profile={name:(a.name||"").trim(),use:Object.assign({},a.use),sex:a.sex,period:a.sex==="f",dumbbells:a.dumbbells.slice().sort((x,y)=>x-y),done:true};
+  LSX.set("413.profile",profile); applyProfile();
+}
+
+/* questionnaire */
+let OB=null;
+function startOnboarding(){
+  const G=goalBase(todayK()), ks=Object.keys(bw).sort();
+  OB={i:0,a:{name:(profile&&profile.name)||(syncUser&&syncUser.displayName||"").split(" ")[0]||"",use:Object.assign({workouts:true,food:true,body:true},profile&&profile.use),sex:profile&&["f","m"].includes(profile.sex)?profile.sex:"",period:profile?profile.period:null,dumbbells:(profile&&profile.dumbbells||STEPS).slice(),kcal:G?G.kcal:"",pct:Object.assign({},pctOf(G)),cw:ks.length?bw[ks[ks.length-1]]:"",gw:bgoal||""}};
+  $("#onb").hidden=false; document.body.style.overflow="hidden"; renderOnb();
+}
+function obSteps(){ const a=OB.a, s=["name","use","sex"]; if(a.use.workouts) s.push("db"); if(a.use.food) s.push("food"); if(a.use.body) s.push("body"); s.push("done"); return s; }
+function renderOnb(){
+  const steps=obSteps(), st=steps[OB.i], a=OB.a, last=st==="done";
+  let h="", ok=true;
+  if(st==="name"){ h=`<h2>Welcome to 413</h2><p class="qsub">A few quick questions to set the app up for you. You can change any of this later in the menu.</p><label class="qlab">What should we call you?<input id="obName" value="${esc(a.name)}" placeholder="First name" autocomplete="given-name"></label>`; ok=!!a.name.trim(); }
+  if(st==="use"){ h=`<h2>What will you use 413 for?</h2><p class="qsub">Pick as many as you like. Only these tabs will show.</p>${fUse(a)}`; ok=Object.values(a.use).some(Boolean); }
+  if(st==="sex"){ h=`<h2>Are you female or male?</h2>${fSex(a)}`; ok=!!a.sex; }
+  if(st==="db"){ h=`<h2>Which dumbbells do you have?</h2><p class="qsub">Weight suggestions and the plus/minus buttons step through these.</p>${fDb(a)}`; ok=a.dumbbells.length>0; }
+  if(st==="food"){ const k=num(a.kcal)||0, P2=a.pct, sum=P2.p+P2.c+P2.f; h=`<h2>Daily food goal</h2><p class="qsub">Set your calories and split them in 5% steps. You can skip this and do it later.</p>
+    <label class="qlab">Calories<input id="obKcal" inputmode="numeric" value="${a.kcal}" placeholder="1800"></label>
+    <div class="pcts">${[["p","Protein",4],["c","Carbs",4],["f","Fat",9]].map(([m,l,d])=>`<div class="pctrow"><span class="pl">${l}</span><button type="button" class="icon" data-obpm="${m}:-5" ${P2[m]<=0?"disabled":""}>−</button><b class="pv">${P2[m]}%</b><button type="button" class="icon" data-obpm="${m}:5" ${sum>=100?"disabled":""}>+</button><span class="pg">${k?r0(k*P2[m]/100/d)+" g":"– g"}</span></div>`).join("")}</div>
+    <p class="gleft${sum===100?" ok":""}">${sum===100?"All 100% assigned":`${100-sum}% left to assign`}</p>`; ok=!k||sum===100; }
+  if(st==="body"){ h=`<h2>Your weight</h2><p class="qsub">Optional. Add these now or later on the Body tab.</p><div class="fields"><label class="qlab">Current (lb)<input id="obCw" inputmode="decimal" value="${a.cw}"></label><label class="qlab">Goal (lb)<input id="obGw" inputmode="decimal" value="${a.gw}"></label></div>`; }
+  if(last){ h=`<h2>You're all set${a.name?", "+esc(a.name):""}</h2><p class="qsub">Your data saves to your account and syncs to any device you sign in on. Change your answers anytime: tap 413 at the top, then My profile &amp; features.</p>`; }
+  $("#onbIn").innerHTML=`<div class="obdots">${steps.map((_,i)=>`<i class="${i<=OB.i?"on":""}"></i>`).join("")}</div>${h}
+   <div class="obnav">${OB.i>0&&!last?`<button class="btn ghost" id="obBack">Back</button>`:"<span></span>"}<button class="btn pri" id="obNext" ${ok?"":"disabled"}>${last?"Start using 413":(st==="food"&&!num(a.kcal))||(st==="body"&&!a.cw&&!a.gw)?"Skip":"Next"}</button></div>`;
+}
+$("#onb").addEventListener("input",e=>{ if(!OB) return; const a=OB.a;
+  if(e.target.id==="obName"){ a.name=e.target.value; $("#obNext").disabled=!a.name.trim(); }
+  if(e.target.id==="obKcal"){ a.kcal=e.target.value; const pos=e.target.selectionStart; renderOnb(); const i=$("#obKcal"); i.focus(); try{ i.setSelectionRange(pos,pos); }catch(err){} }
+  if(e.target.id==="obCw") a.cw=e.target.value; if(e.target.id==="obGw") a.gw=e.target.value;
+  if(e.target.id==="obCw"||e.target.id==="obGw") $("#obNext").textContent=a.cw||a.gw?"Next":"Skip";
+});
+$("#onb").addEventListener("click",e=>{ if(!OB) return; const a=OB.a;
+  if(formClick(e,a)){ renderOnb(); return; }
+  const pm=e.target.closest("[data-obpm]"); if(pm){ const [m,d]=pm.dataset.obpm.split(":"), s=a.pct.p+a.pct.c+a.pct.f, nv=a.pct[m]+(+d); if(nv>=0&&!(+d>0&&s>=100)){ a.pct[m]=nv; renderOnb(); } return; }
+  if(e.target.closest("#obBack")){ OB.i=Math.max(0,OB.i-1); renderOnb(); return; }
+  if(e.target.closest("#obNext")){ const steps=obSteps(); if(steps[OB.i]==="done"){ finishOnb(); return; } OB.i++; renderOnb(); window.scrollTo(0,0); }
+});
+function finishOnb(){
+  const a=OB.a, today=todayK(); saveProfile(a);
+  const k=Math.round(num(a.kcal)); if(a.use.food&&k>0&&a.pct.p+a.pct.c+a.pct.f===100){ const G=goalBase(today); if(!G||G.kcal!==k||JSON.stringify(pctOf(G))!==JSON.stringify(a.pct)){ const ent={from:goalHist.length?today:"0000-00-00",kcal:k,p:Math.round(k*a.pct.p/400),c:Math.round(k*a.pct.c/400),f:Math.round(k*a.pct.f/900),pct:Object.assign({},a.pct)}; goalHist=goalHist.filter(x=>x.from!==ent.from); goalHist.push(ent); LSX.set(GH,goalHist); } }
+  const cw=num(a.cw), gw=num(a.gw); if(a.use.body){ if(cw>40&&bw[today]==null){ bw[today]=r1(cw); LSX.set(K.bw,bw); } if(gw>40){ bgoal=r1(gw); LSX.set(K.bgoal,bgoal); } }
+  OB=null; $("#onb").hidden=true; document.body.style.overflow=""; showView("home");
+}
+
+/* settings page */
+let PF=null;
+function renderProfileView(){
+  if(!PF){ const p=PROF(); PF={name:p.name||"",use:Object.assign({},p.use),sex:["f","m"].includes(p.sex)?p.sex:"",period:p.period,dumbbells:(p.dumbbells||STEPS).slice()}; }
+  $("#pfBody").innerHTML=`<label class="qlab">Name<input id="pfName" value="${esc(PF.name)}"></label>
+   <span class="eyebrow" style="margin-top:16px">Features</span>${fUse(PF)}<p class="sync" style="margin:0">Turning a feature off only hides it. Your data stays, and comes back if you turn it on again.</p>
+   <span class="eyebrow" style="margin-top:16px">Female or male</span>${fSex(PF)}
+   ${PF.use.workouts?`<span class="eyebrow" style="margin-top:16px">Your dumbbells</span>${fDb(PF)}`:""}
+   <button class="btn pri big" id="pfSave" style="margin-top:18px" ${Object.values(PF.use).some(Boolean)&&PF.name.trim()&&PF.sex&&(!PF.use.workouts||PF.dumbbells.length)?"":"disabled"}>Save</button>`;
+}
+$("#pfBody").addEventListener("click",e=>{ if(!PF) return; if(formClick(e,PF)){ renderProfileView(); return; } if(e.target.closest("#pfSave")){ saveProfile(PF); PF=null; toast("Saved"); showView("home"); } });
+$("#pfBody").addEventListener("input",e=>{ if(e.target.id==="pfName"&&PF){ PF.name=e.target.value; } });
+
+/* ================= ACCOUNT & SYNC ================= */
+let fbAuth=null, fbDb=null, syncUser=null, syncState="off", unsubKV=null, pushT=null, pendingReload=false, syncReady=false;
+const kvCol=()=>fbDb.collection("users").doc(syncUser.uid).collection("kv");
+const CH=600000;
+function schedulePush(){ if(!syncReady) return; clearTimeout(pushT); pushT=setTimeout(pushDirty,1200); }
+async function pushKey(k){
+  const v=localStorage.getItem(k), t=syncMeta[k]||Date.now(), col=kvCol();
+  if(v==null){ await col.doc(k).set({t,del:true}); return; }
+  const n=Math.max(1,Math.ceil(v.length/CH));
+  for(let i=1;i<n;i++) await col.doc(k+"~"+i).set({s:v.slice(i*CH,(i+1)*CH)});
+  await col.doc(k).set({t,n,s:v.slice(0,CH)});
+}
+async function pushDirty(){
+  if(!syncReady||!syncDirty.size) return;
+  setSyncState("syncing");
+  try{
+    for(const k of [...syncDirty]){ const t0=syncMeta[k]; await pushKey(k); if(syncMeta[k]===t0) syncDirty.delete(k); }
+    _lsSet.call(localStorage,"413.sync.dirty",JSON.stringify([...syncDirty]));
+    setSyncState(syncDirty.size?"syncing":"ok"); if(syncDirty.size) schedulePush();
+  }catch(e){ setSyncState(navigator.onLine===false?"offline":"error"); clearTimeout(pushT); pushT=setTimeout(pushDirty,15000); }
+}
+async function docValue(d){ const x=d.data(); if(x.del) return null; if(!(x.n>1)) return x.s; let s=x.s; for(let i=1;i<x.n;i++){ const c=await kvCol().doc(d.id+"~"+i).get(); s+=(c.exists?c.data().s:""); } return s; }
+function applyRemote(k,v,t){
+  syncApplying=true; try{ if(v==null) _lsRm.call(localStorage,k); else _lsSet.call(localStorage,k,v); }catch(e){} syncApplying=false;
+  syncMeta[k]=t; syncDirty.delete(k); _lsSet.call(localStorage,"413.sync.meta",JSON.stringify(syncMeta)); _lsSet.call(localStorage,"413.sync.dirty",JSON.stringify([...syncDirty]));
+}
+function setSyncState(s){ syncState=s; const el=$("#syncLine"); if(el) el.textContent=syncLabel(); }
+const syncLabel=()=>({off:"Not syncing",syncing:"Syncing…",ok:"All changes saved to your account",offline:"Offline. Changes will sync when you're back online.",error:"Couldn't sync. Will retry."})[syncState]||"";
+function localKeys(){ const ks=[]; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(syncable(k)) ks.push(k); } return ks; }
+function hasLocalData(){ return localKeys().some(k=>/homecamp\.log|413\.food\.log|413\.body\.w/.test(k)&&(localStorage.getItem(k)||"").length>4); }
+function askChoice(){ return new Promise(res=>{ $("#authIn").innerHTML=`<h2>This device already has data</h2><p class="qsub">Your account also has saved data. Which should 413 keep?</p>
+  <button class="btn pri big" id="chCloud" style="width:100%">Use my account's data</button><p class="sync">Recommended. Replaces what's on this device with what's in your account.</p>
+  <button class="btn big" id="chLocal" style="width:100%">Use this device's data</button><p class="sync">Replaces what's in your account with what's on this device.</p>`;
+  $("#auth").hidden=false; $("#chCloud").onclick=()=>res("cloud"); $("#chLocal").onclick=()=>res("local"); }); }
+async function startSync(user){
+  syncUser=user; setSyncState("syncing");
+  const prevUid=localStorage.getItem("413.sync.uid");
+  if(prevUid&&prevUid!==user.uid){ localKeys().forEach(k=>_lsRm.call(localStorage,k)); syncMeta={}; syncDirty=new Set(); }
+  let snap; try{ snap=await kvCol().get(); }catch(e){ setSyncState("offline"); $("#auth").hidden=true; return; }
+  const mains=snap.docs.filter(d=>!d.id.includes("~"));
+  if(prevUid!==user.uid){
+    let mode=!mains.length?"local":!hasLocalData()?"cloud":await askChoice();
+    if(mode==="local"){ const t=Date.now(); localKeys().forEach(k=>{ syncMeta[k]=t; syncDirty.add(k); }); mains.forEach(d=>{ if(!localStorage.getItem(d.id)){ syncMeta[d.id]=t; syncDirty.add(d.id); } }); }
+    else { syncDirty=new Set(); localKeys().forEach(k=>{ if(!mains.some(d=>d.id===k)) _lsRm.call(localStorage,k); }); for(const d of mains) applyRemote(d.id,await docValue(d),d.data().t||0); }
+    _lsSet.call(localStorage,"413.sync.uid",user.uid);
+  } else {
+    for(const d of mains){ const t=d.data().t||0; if(t>(syncMeta[d.id]||0)) applyRemote(d.id,await docValue(d),t); }
+  }
+  _lsSet.call(localStorage,"413.sync.meta",JSON.stringify(syncMeta)); _lsSet.call(localStorage,"413.sync.dirty",JSON.stringify([...syncDirty]));
+  syncReady=true; $("#auth").hidden=true; reloadAll(); pushDirty(); if(!syncDirty.size) setSyncState("ok");
+  if(unsubKV) unsubKV();
+  unsubKV=kvCol().onSnapshot(async s=>{ let ch=false;
+    for(const c of s.docChanges()){ const d=c.doc; if(d.metadata.hasPendingWrites||d.id.includes("~")||c.type==="removed") continue; const t=d.data().t||0; if(t>(syncMeta[d.id]||0)){ applyRemote(d.id,await docValue(d),t); ch=true; } }
+    if(ch){ pendingReload=true; tryReload(); }
+  },()=>setSyncState("offline"));
+  if(!profile||!profile.done) startOnboarding();
+}
+function tryReload(){ if(!pendingReload) return; if(run||SH||OB||(view==="goals"&&gEdit)) return; pendingReload=false; reloadAll(); }
+setInterval(tryReload,2500);
+function reloadAll(){
+  try{ state=JSON.parse(localStorage.getItem("homecamp.v1")); }catch(e){}
+  if(!state||!state.days) state={days:DEFAULT.map(p=>({p,camp:null}))};
+  state.sel=todayIdx(); favs=LSX.get("homecamp.favs",[]); log=LSX.get("homecamp.log",[]); if(rollWeek()) save();
+  flog=LSX.get(K.flog,[]); foods=LSX.get(K.foods,{}); recipes=LSX.get(K.recipes,[]); smeals=LSX.get(K.meals,[]);
+  bw=LSX.get(K.bw,{}); bgoal=LSX.get(K.bgoal,null); meas=LSX.get(K.meas,{}); goalHist=LSX.get(GH,[]);
+  tags=LSX.get("413.tags",{}); tagList=LSX.get("413.tagList",tagList); water=LSX.get("413.water",{}); breaks=LSX.get("413.breaks",[]);
+  profile=LSX.get("413.profile",null);
+  try{ themePref=localStorage.getItem("413.theme")||"auto"; }catch(e){} applyTheme();
+  applyProfile(); renderStreak(); if(VIEW_NEEDS[view]&&!uses(VIEW_NEEDS[view])) showView("home"); else refreshView();
+}
+
+/* sign-in screen */
+let authMode="in";
+function renderAuth(msg){
+  $("#authIn").innerHTML=`<div class="authbrand">4<svg class="x" viewBox="0 0 26 100" aria-hidden="true"><rect x="10.5" y="22" width="5" height="70"/><rect x="0" y="37.5" width="26" height="5"/></svg>13</div>
+   <p class="qsub" style="text-align:center">${authMode==="in"?"Sign in to keep your data safe and synced across your devices.":"Create your account. Your data stays private to you."}</p>
+   <button class="btn big gbtn" id="gSign"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.6 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.7 3-4.3 3-7.3z" fill="#4285F4"/><path d="M12 22c2.7 0 5-.9 6.6-2.4l-3.2-2.5c-.9.6-2 1-3.4 1-2.6 0-4.8-1.8-5.6-4.1H3.1v2.6A10 10 0 0 0 12 22z" fill="#34A853"/><path d="M6.4 14c-.2-.6-.3-1.3-.3-2s.1-1.4.3-2V7.4H3.1a10 10 0 0 0 0 9.2L6.4 14z" fill="#FBBC05"/><path d="M12 6c1.5 0 2.8.5 3.8 1.5l2.9-2.9A10 10 0 0 0 3.1 7.4L6.4 10C7.2 7.7 9.4 6 12 6z" fill="#EA4335"/></svg>Continue with Google</button>
+   <div class="ordiv"><span>or</span></div>
+   <form id="authForm" class="nform"><label>Email<input name="email" type="email" autocomplete="email" required></label><label>Password<input name="pw" type="password" autocomplete="${authMode==="in"?"current-password":"new-password"}" minlength="6" required></label>
+   <button class="btn pri big">${authMode==="in"?"Sign in":"Create account"}</button></form>
+   ${msg?`<p class="autherr">${esc(msg)}</p>`:""}
+   <div class="authlinks"><button class="linkbtn" id="authMode">${authMode==="in"?"New here? Create an account":"Have an account? Sign in"}</button>${authMode==="in"?`<button class="linkbtn" id="authReset">Forgot password?</button>`:""}</div>`;
+  $("#auth").hidden=false;
+}
+const authMsg=e=>{ const c=(e&&e.code)||""; return /wrong-password|invalid-credential|user-not-found|invalid-login/.test(c)?"That email and password don't match.":/email-already-in-use/.test(c)?"There's already an account with that email. Sign in instead.":/weak-password/.test(c)?"Use at least 6 characters for your password.":/invalid-email/.test(c)?"That email doesn't look right.":/popup-closed|cancelled-popup/.test(c)?"":/popup-blocked|operation-not-supported|web-storage/.test(c)?"Google sign-in didn't open here. Use email and password instead. (Use the same email and it's the same account.)":/network/.test(c)?"No connection. Check your internet and try again.":/too-many/.test(c)?"Too many tries. Wait a minute and try again.":"Something went wrong. Try again."; };
+$("#auth").addEventListener("click",async e=>{
+  if(e.target.closest("#authMode")){ authMode=authMode==="in"?"up":"in"; renderAuth(); return; }
+  if(e.target.closest("#gSign")){ try{ await fbAuth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }catch(err){ const m=authMsg(err); if(m) renderAuth(m); } return; }
+  if(e.target.closest("#authReset")){ const em=$("#authForm [name=email]").value.trim(); if(!em){ renderAuth("Type your email above, then tap Forgot password."); return; } try{ await fbAuth.sendPasswordResetEmail(em); renderAuth("Check your email for a link to reset your password."); }catch(err){ renderAuth(authMsg(err)); } }
+});
+$("#auth").addEventListener("submit",async e=>{
+  if(e.target.id!=="authForm") return; e.preventDefault(); const D=Object.fromEntries(new FormData(e.target));
+  try{ if(authMode==="in") await fbAuth.signInWithEmailAndPassword(D.email.trim(),D.pw); else await fbAuth.createUserWithEmailAndPassword(D.email.trim(),D.pw); }catch(err){ renderAuth(authMsg(err)); }
+});
+function renderAcct(){
+  const el=$("#acctBody"); if(!el) return;
+  if(!SYNC_ON){ el.innerHTML=""; return; }
+  el.innerHTML=syncUser?`<div class="acct"><div><span class="eyebrow">Signed in</span><b>${esc(syncUser.email||syncUser.displayName||"")}</b><small id="syncLine">${esc(syncLabel())}</small></div><button class="btn ghost sm" id="signOut">Sign out</button></div>`:"";
+}
+document.addEventListener("click",async e=>{
+  if(!e.target.closest("#signOut")) return;
+  if(!confirmOut){ confirmOut=true; e.target.textContent="Tap again to sign out"; setTimeout(()=>{ confirmOut=false; renderAcct(); },4000); return; }
+  await pushDirty().catch(()=>{});
+  if(syncDirty.size){ toast("Some changes haven't synced yet. Try again when you're online."); return; }
+  if(unsubKV) unsubKV(); await fbAuth.signOut();
+  localKeys().forEach(k=>_lsRm.call(localStorage,k)); ["413.sync.meta","413.sync.dirty","413.sync.uid","413.preupdate"].forEach(k=>_lsRm.call(localStorage,k));
+  location.reload();
+});
+let confirmOut=false;
+function initSync(){
+  if(!SYNC_ON) return;
+  try{ firebase.initializeApp(window.FB_CONFIG); fbAuth=firebase.auth(); fbDb=firebase.firestore(); }catch(e){ return; }
+  if(!localStorage.getItem("413.sync.uid")) renderAuth();
+  fbAuth.onAuthStateChanged(u=>{ if(u){ startSync(u); } else { syncUser=null; syncReady=false; renderAuth(); } });
+  addEventListener("online",()=>schedulePush());
+  document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") schedulePush(); });
+}
 
 /* ---------- START ---------- */
 renderLib(); renderStreak(); persist();
+applyProfile();
 showView("home");
+initSync();
 if(run&&run.camp){
   if(!run.p) run.p=(state.days[run.day]||{}).p;
   if(!run.stage) run.stage="go";
