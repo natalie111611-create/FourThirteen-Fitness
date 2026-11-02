@@ -564,6 +564,32 @@ button.brand{background:none;border:0;padding:4px 2px;color:var(--ink);cursor:po
 .acct small{font-size:.74rem;color:var(--muted)}
 #pfBody{gap:10px}
 .tiles>:only-child{grid-column:1/-1}
+
+/* ---------- Drop 4.1: full nutrition, water oz ---------- */
+.nlink{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin-top:12px;text-align:left;color:var(--ink);cursor:pointer}
+.nlink>span{display:flex;flex-direction:column;gap:2px}
+.nlink svg{width:16px;height:16px;stroke:var(--muted);fill:none;stroke-width:2;flex:none}
+.rings.tapme{cursor:pointer}
+.ngrp{margin-top:12px;gap:6px}
+.nrow2{display:grid;grid-template-columns:1fr auto;gap:3px 10px;font-size:.88rem;padding:7px 0;border-bottom:1px solid var(--line)}
+.nrow2:last-child{border-bottom:0}
+.nrow2 .nv{font-variant-numeric:tabular-nums;font-weight:600;text-align:right}
+.nrow2 .nv small{font-weight:500;color:var(--muted);margin-left:4px}
+.nrow2>.mbar{grid-column:1/-1}
+.split{display:grid;grid-template-columns:52px 1fr;align-items:center;gap:10px;margin-top:8px}
+.split .sl{font-size:.74rem;color:var(--muted)}
+.sbar{display:flex;height:22px;border-radius:7px;overflow:hidden;background:var(--line)}
+.sbar i{display:flex;align-items:center;justify-content:center;min-width:0;overflow:hidden}
+.sbar b{font:600 .66rem var(--body);white-space:nowrap}
+.sp{background:var(--ink);color:var(--bg)}
+.sc{background:var(--mid);color:var(--bg)}
+.sf{background:var(--line);color:var(--ink)}
+.sbar .sf{background:#CFC9BF}
+.leg2{display:flex;gap:14px;font-size:.74rem;color:var(--muted);margin-top:8px}
+.leg2 i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.leg2 i.sf{background:#CFC9BF}
+.wrow2 .chip{padding:9px 12px}
+.wrow2 .icon.round{font:600 .95rem var(--body)}
 *,*::before,*::after{font-feature-settings:"lnum" 1!important}
 </style>
 <script src="firebase-app-compat.js"></script>
@@ -709,6 +735,11 @@ button.brand{background:none;border:0;padding:4px 2px;color:var(--ink);cursor:po
 </section>
 <section id="v-food" hidden>
   <div id="foodBody"></div>
+</section>
+
+<section id="v-nday" hidden>
+  <button class="back" data-go="food"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>Food</button>
+  <div id="ndBody"></div>
 </section>
 
 <section id="v-goals" hidden>
@@ -1082,7 +1113,7 @@ function renderStreak(){ const s=streaks(); $("#streakN").textContent=s.cur; $("
 
 /* ---------- VIEWS ---------- */
 let view="home";
-const TAB_OF={home:"home",day:"",week:"week",favs:"week",cal:"cal",report:"cal",food:"food",goals:"food",body:"body",checkin:"home"};
+const TAB_OF={nday:"food",home:"home",day:"",week:"week",favs:"week",cal:"cal",report:"cal",food:"food",goals:"food",body:"body",checkin:"home"};
 function showView(v){
   if(typeof closeDrawer==="function") closeDrawer();
   if(typeof VIEW_NEEDS!=="undefined"&&VIEW_NEEDS[v]&&!uses(VIEW_NEEDS[v])) v="home";
@@ -1099,6 +1130,7 @@ function refreshView(){
   else if(view==="week") renderWeekList();
   else if(view==="favs") renderFavs();
   else if(view==="food") renderFood();
+  else if(view==="nday") renderNday();
   else if(view==="goals"){ gEdit=null; renderGoals(); }
   else if(view==="body") renderBody();
   else if(view==="profile"){ PF=null; renderProfileView(); }
@@ -1671,12 +1703,18 @@ function usdaNut(list){
   const get=(ids,nums)=>{ for(const n of list||[]){ const id=n.nutrientId??(n.nutrient&&n.nutrient.id), no=String(n.nutrientNumber??(n.nutrient&&n.nutrient.number)??""), unit=String(n.unitName??(n.nutrient&&n.nutrient.unitName)??"").toLowerCase(), v=n.value??n.amount; if(v==null||unit==="kj") continue; if(ids.includes(id)||nums.includes(no)) return +v; } return null; };
   return {kcal:get([1008],["208"])??get([2047,2048],["957","958"]),p:get([1003],["203"]),c:get([1005],["205"]),f:get([1004],["204"]),fib:get([1079],["291"]),sug:get([2000,1063],["269"]),na:get([1093],["307"]),k:get([1092],["306"]),ca:get([1087],["301"]),fe:get([1089],["303"]),vd:get([1114],["328"]),sat:get([1258],["606"]),chol:get([1253],["601"])};
 }
+function usdaAll(list){
+  const o={}; (list||[]).forEach(n=>{ const name=n.nutrientName??(n.nutrient&&n.nutrient.name), unit=String(n.unitName??(n.nutrient&&n.nutrient.unitName)??"").toLowerCase(), v=n.value??n.amount;
+    if(!name||v==null||unit==="kj"||/^energy/i.test(name)) return; o[name+"|"+(unit==="ug"?"µg":unit)]=+(+v).toPrecision(4); });
+  return Object.keys(o).length?o:null;
+}
 function usdaFood(x){
   const portions=[];
   (x.foodMeasures||[]).forEach(m=>{ const l=m.disseminationText; if(l&&m.gramWeight>0&&!/not specified/i.test(l)) portions.push({l,g:+m.gramWeight}); });
   (x.foodPortions||[]).forEach(m=>{ const l=m.portionDescription&&!/not specified/i.test(m.portionDescription)?m.portionDescription:[m.amount,m.measureUnit&&m.measureUnit.name!=="undetermined"?m.measureUnit.name:"",m.modifier||""].join(" ").replace(/\s+/g," ").trim(); if(l&&m.gramWeight>0) portions.push({l,g:+m.gramWeight}); });
   if(x.servingSize>0&&/^(g|ml|grm|mlt)$/i.test(x.servingSizeUnit||"")){ const g=+x.servingSize, u=/^ml|mlt/i.test(x.servingSizeUnit)?"ml":"g"; portions.unshift({l:x.householdServingFullText?`${x.householdServingFullText} (${r0(g)} ${u})`:`1 serving (${r0(g)} ${u})`,g}); }
   const f={id:"usda:"+x.fdcId,fdc:x.fdcId,src:"usda",name:titleCase(x.description||"Food"),brand:x.brandOwner||x.brandName||"",type:x.dataType||"",per:usdaNut(x.foodNutrients),portions:dedupe(portions)};
+  const all=usdaAll(x.foodNutrients); if(all) f.all=all;
   if(/^ml|mlt/i.test(x.servingSizeUnit||"")&&!density(f)) f.gml=1;
   return f;
 }
@@ -1685,6 +1723,10 @@ function titleCase(t){ t=String(t); return t===t.toUpperCase()?t.toLowerCase().r
 function offFood(p,code){
   const n=p.nutriments||{}; const kcal=n["energy-kcal_100g"]!=null?+n["energy-kcal_100g"]:(n["energy_100g"]!=null?n["energy_100g"]/4.184:null);
   const f={id:"off:"+(code||p.code),code:code||p.code,src:"off",name:p.product_name||"Product",brand:(p.brands||"").split(",")[0],per:{kcal,p:+n.proteins_100g||0,c:+n.carbohydrates_100g||0,f:+n.fat_100g||0,fib:+n.fiber_100g||0,sug:+n.sugars_100g||0},portions:[]};
+  const all={}; Object.keys(n).forEach(key=>{ const m=key.match(/^(.+)_100g$/); if(!m||/^energy/.test(m[1])||n[key]===""||n[key]==null||isNaN(+n[key])) return; const nm=m[1].replace(/-/g," ").replace(/^./,c=>c.toUpperCase()), g=+n[key];
+    if(/^(proteins|carbohydrates|fat|fiber|sugars|salt|saturated fat|trans fat|monounsaturated fat|polyunsaturated fat|added sugars|starch|alcohol)$/i.test(nm)) all[nm.replace(/^Proteins$/,"Protein").replace(/^Carbohydrates$/,"Carbohydrate")+"|g"]=+g.toPrecision(4);
+    else if(g>=0.001) all[nm+"|mg"]=+(g*1000).toPrecision(4); else all[nm+"|µg"]=+(g*1e6).toPrecision(4); });
+  if(Object.keys(all).length) f.all=all;
   const mg=(key,mul)=>n[key]!=null&&n[key]!==""?(+n[key])*mul:null; Object.assign(f.per,{na:mg("sodium_100g",1000),k:mg("potassium_100g",1000),ca:mg("calcium_100g",1000),fe:mg("iron_100g",1000),vd:mg("vitamin-d_100g",1e6),sat:mg("saturated-fat_100g",1),chol:mg("cholesterol_100g",1000)});
   if(+p.serving_quantity>0) f.portions.push({l:p.serving_size?`1 serving · ${p.serving_size}`:`1 serving (${r0(p.serving_quantity)} g)`,g:+p.serving_quantity});
   if(/ml\b/i.test(p.serving_size||"")&&!density(f)) f.gml=1;
@@ -1702,7 +1744,7 @@ async function searchOFF(q){
 }
 async function usdaDetails(food){
   if(food.src!=="usda"||food.portions.length>1||!food.fdc) return food;
-  try{ const j=await fetchJSON(`https://api.nal.usda.gov/fdc/v1/food/${food.fdc}?api_key=${encodeURIComponent(usdaKey())}`); const d=usdaFood(Object.assign({},j,{fdcId:food.fdc,foodMeasures:[]})); if(d.portions.length) food.portions=dedupe([...food.portions,...d.portions]); }catch(e){}
+  try{ const j=await fetchJSON(`https://api.nal.usda.gov/fdc/v1/food/${food.fdc}?api_key=${encodeURIComponent(usdaKey())}`); const d=usdaFood(Object.assign({},j,{fdcId:food.fdc,foodMeasures:[]})); if(d.portions.length) food.portions=dedupe([...food.portions,...d.portions]); if(d.all) food.all=Object.assign({},food.all,d.all); }catch(e){}
   return food;
 }
 async function lookupBarcode(code){
@@ -1855,7 +1897,8 @@ function recipesHTML(){
 function recipeFood(r){
   let g=0, t=ZERO; r.items.forEach(it=>{ g+=it.g; t=addN(t,nutr(it.food,it.g)); });
   const total=r.totalG>0?r.totalG:g, k=total>0?100/total:0;
-  return {id:"recipe:"+r.id,src:"recipe",name:r.name,brand:"Recipe",per:{kcal:t.kcal*k,p:t.p*k,c:t.c*k,f:t.f*k,fib:t.fib*k,sug:t.sug*k},portions:[{l:"1 serving",g:total/(r.servings||1)}]};
+  const all={}; let anyAll=false; r.items.forEach(it=>{ const m=it.food.all||foodNutr[it.food.id]; if(!m) return; anyAll=true; Object.entries(m).forEach(([key,v])=>all[key]=(all[key]||0)+v*it.g/100); }); Object.keys(all).forEach(key=>all[key]=+(all[key]*k).toPrecision(4));
+  return {id:"recipe:"+r.id,src:"recipe",name:r.name,brand:"Recipe",per:{kcal:t.kcal*k,p:t.p*k,c:t.c*k,f:t.f*k,fib:t.fib*k,sug:t.sug*k},portions:[{l:"1 serving",g:total/(r.servings||1)}],all:anyAll?all:undefined};
 }
 function recipeHTML(){
   const r=SH.recipe, f=recipeFood(r), per=nutr(f,f.portions[0].g||0);
@@ -1930,6 +1973,8 @@ $("#sheet").addEventListener("click",e=>{
   if(b.id==="amtOk"){
     const f=SH.food, g=gramsFor(f,SH.qty,SH.unit); if(!(g>0)){ toast("Enter an amount"); return; }
     const snap={id:f.id,src:f.src,name:f.name,brand:f.brand||"",per:f.per,portions:f.portions||[],gml:f.gml,code:f.code};
+    if(f.all&&f.src!=="recipe"&&!foodNutr[f.id]){ foodNutr[f.id]=f.all; LSX.set("413.food.nutr",foodNutr); }
+    if(f.src==="recipe"&&f.all) snap.all=f.all;
     if(f.src!=="recipe"){ rememberFood(Object.assign({},snap,{lastUnit:SH.unit,lastQty:SH.qty,saved:foods[f.id]&&foods[f.id].saved})); }
     if(SH.recipe){ SH.recipe.items.push({food:snap,qty:SH.qty,unit:SH.unit,g}); SH.food=null; SH.tab="recipeEdit"; renderSheet(); return; }
     if(SH.edit){ Object.assign(SH.edit,{food:snap,qty:SH.qty,unit:SH.unit,g}); const mv=$("#moveMeal"); if(mv) SH.edit.meal=mv.value; }
@@ -1965,7 +2010,7 @@ function renderGoals(){
    <p class="gleft${sum===100?" ok":""}">${sum===100?"All 100% assigned":sum<100?`${100-sum}% left to assign`:""}</p>
    <button class="btn pri big" ${sum===100&&k>0?"":"disabled"}>Save goals</button>
    <p class="sync" style="margin:0">Changes apply from today on. Past days keep the goals they had.</p></form>
-   <div class="opt" style="margin-top:18px"><span class="eyebrow">Water</span><label class="nform">Glasses a day<input id="wgIn" inputmode="numeric" value="${waterGoal()}"></label></div>
+   <div class="opt" style="margin-top:18px"><span class="eyebrow">Water</span><label class="nform">Ounces a day<input id="wgIn" inputmode="numeric" value="${waterGoal()}"></label></div>
    <div class="opt" style="margin-top:12px"><span class="eyebrow">Diet breaks</span>
      <p class="sync">A planned week or two at maintenance calories. On those days your calories switch automatically and keep the same macro split. Diet breaks every 6 to 10 weeks can make the next stretch easier to stick with.</p>
      ${breaks.length?breaks.map((b,i)=>`<div class="cil"><span>${esc(shortDate(b.from))} – ${esc(shortDate(b.to))}</span><span>${b.kcal.toLocaleString()} cal ${b.to>=today?`<button class="linkbtn" data-brdel="${i}">Remove</button>`:""}</span></div>`).join(""):""}
@@ -1977,7 +2022,7 @@ document.addEventListener("click",e=>{
   const nv=P[m]+(+d); if(nv<0||(+d>0&&sum>=100)) return; P[m]=nv; renderGoals();
 });
 document.addEventListener("input",e=>{ if(e.target.name==="pm"&&e.target.closest("#gForm")&&gEdit) gEdit.pm=e.target.value; });
-document.addEventListener("change",e=>{ if(e.target.id==="wgIn"){ const v=Math.round(num(e.target.value)); if(v>0){ LSX.set("413.waterGoal",v); toast("Water goal saved"); } } });
+document.addEventListener("change",e=>{ if(e.target.id==="wgIn"){ const v=Math.round(num(e.target.value)); if(v>0){ LSX.set("413.waterGoalOz",v); toast("Water goal saved"); } } });
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-brdel]"); if(!b) return; breaks.splice(+b.dataset.brdel,1); LSX.set("413.breaks",breaks); renderGoals(); });
 document.addEventListener("submit",e=>{
   if(e.target.id!=="brkForm") return; e.preventDefault();
@@ -2085,7 +2130,7 @@ function renderBackup(){
    <p class="sync" style="margin:0">Free key from <a href="https://fdc.nal.usda.gov/api-key-signup" target="_blank" rel="noopener">fdc.nal.usda.gov/api-key-signup</a>. Without one, searches are limited to about 30 an hour.</p>`;
 }
 let restorePending=null;
-const APPV="5";
+const APPV="6";
 try{ const pv=localStorage.getItem("413.appv"); if(pv!==APPV){ const d=backupData(); if(pv&&Object.keys(d.data).length) localStorage.setItem("413.preupdate",JSON.stringify(Object.assign(d,{fromVersion:pv}))); localStorage.setItem("413.appv",APPV); } }catch(e){}
 document.addEventListener("click",e=>{
   const b=e.target.closest("button"); if(!b) return;
@@ -2122,7 +2167,9 @@ document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeDrawer(); });
 /* ---------- small stores ---------- */
 let tags=LSX.get("413.tags",{}), tagList=LSX.get("413.tagList",["Period","Salty meal","Ate out","Alcohol","Poor sleep","Stressed","Sick","Travel"]);
 let water=LSX.get("413.water",{}), breaks=LSX.get("413.breaks",[]);
-const waterGoal=()=>LSX.get("413.waterGoal",8);
+const waterGoal=()=>LSX.get("413.waterGoalOz",LSX.get("413.waterGoal",8)*8);
+let waterOz=LSX.get("413.waterOz",{});
+const wOz=d=>waterOz[d]!=null?waterOz[d]:(water[d]||0)*8;
 const todayK=()=>dk(new Date());
 const addDays=(k,n)=>{ const d=parseDk(k); d.setDate(d.getDate()+n); return dk(d); };
 const planFlag=()=>fDate>todayK();
@@ -2132,7 +2179,7 @@ const tagsFor=d=>tags[d]||[];
 function toggleTag(d,t){ const a=new Set(tagsFor(d)); a.has(t)?a.delete(t):a.add(t); if(a.size) tags[d]=[...a]; else delete tags[d]; LSX.set("413.tags",tags); }
 function tagEditor(d){ return `<div class="chips tagbox" data-tagd="${d}">${tagList.filter(t=>t!=="Period"||periodOn()).map(t=>`<button class="chip" data-tag="${esc(t)}" aria-pressed="${tagsFor(d).includes(t)}">${esc(t)}</button>`).join("")}${tagNew===d?`<form class="tagform"><input id="tagIn" placeholder="New tag" maxlength="24" aria-label="New tag"><button class="chip">Add</button></form>`:`<button class="chip ghostc" data-tagnew="1">+ Custom</button>`}</div>`; }
 let tagNew=null;
-function addWater(d,n){ water[d]=Math.max(0,(water[d]||0)+n); if(!water[d]) delete water[d]; LSX.set("413.water",water); }
+function addWater(d,n){ waterOz[d]=Math.max(0,wOz(d)+n); LSX.set("413.waterOz",waterOz); }
 function logStreak(){ const days=new Set(flog.filter(e=>!e.plan).map(e=>e.date)); let k=todayK(); if(!days.has(k)) k=addDays(k,-1); let n=0; while(days.has(k)){ n++; k=addDays(k,-1); } return n; }
 document.addEventListener("click",e=>{
   const t=e.target.closest("[data-tag]"); if(t){ const box=t.closest("[data-tagd]"); toggleTag(box.dataset.tagd,t.dataset.tag); refreshView(); return; }
@@ -2170,20 +2217,20 @@ document.addEventListener("toggle",e=>{ if(e.target.classList&&e.target.classLis
 function renderFood(){
   const today=todayK(), future=fDate>today, ents=flog.filter(e=>e.date===fDate), done=ents.filter(e=>!e.plan), tot=done.reduce((a,e)=>addN(a,entryN(e)),ZERO), planned=ents.filter(e=>e.plan).reduce((a,e)=>addN(a,entryN(e)),ZERO), G=goalsFor(fDate);
   const dLab=fDate===today?"Today":fDate===addDays(today,-1)?"Yesterday":fDate===addDays(today,1)?"Tomorrow":parseDk(fDate).toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric"});
-  const left=G?G.kcal-tot.kcal:null, ls=logStreak(), wv=water[fDate]||0, wg=waterGoal();
+  const left=G?G.kcal-tot.kcal:null, ls=logStreak(), wv=wOz(fDate), wg=waterGoal();
   $("#foodBody").innerHTML=`
    <div class="daynav"><button class="icon" data-fd="-1" aria-label="Previous day"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><button class="dlab" data-fd="0">${esc(dLab)}${future?`<small>Planning ahead</small>`:""}</button><button class="icon" data-fd="1" aria-label="Next day" ${fDate>=addDays(today,7)?"disabled":""}><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button></div>
    <div class="fsum">
      ${G?`<div class="kleft"><div><span class="eyebrow">${left>=0?"Calories left":"Over by"}</span><b>${Math.abs(r0(left)).toLocaleString()}</b></div><div class="kmeta"><span><b>${Math.round(tot.kcal/G.kcal*100)}%</b> used</span><span>${r0(tot.kcal).toLocaleString()} of ${G.kcal.toLocaleString()}</span></div></div>${bar(tot.kcal,G.kcal)}`
       :`<div class="kleft"><div><span class="eyebrow">Eaten</span><b>${r0(tot.kcal).toLocaleString()}</b></div></div><button class="btn" data-go="goals">Set your daily goals</button>`}
-     <div class="rings">${ring("Protein",tot.p,G&&G.p,"g")}${ring("Carbs",tot.c,G&&G.c,"g")}${ring("Fat",tot.f,G&&G.f,"g")}</div>
+     <div class="rings tapme" data-go="nday" role="button" tabindex="0" aria-label="Open full nutrition">${ring("Protein",tot.p,G&&G.p,"g")}${ring("Carbs",tot.c,G&&G.c,"g")}${ring("Fat",tot.f,G&&G.f,"g")}</div>
      ${planned.kcal?`<p class="sync fnote">Planned, not eaten yet: ${r0(planned.kcal).toLocaleString()} cal · P ${r0(planned.p)}g</p>`:""}
      ${G&&G.brk?`<p class="sync fnote">Diet break through ${esc(shortDate(G.brk.to))} · maintenance calories</p>`:""}
      ${ls>1&&!future?`<p class="sync fnote">${ls}-day logging streak</p>`:""}
      ${G&&left>0&&!future?`<button class="btn ghost fitsbtn" id="fitsBtn">What fits in ${r0(left).toLocaleString()} cal?</button>`:""}
    </div>
-   ${future?"":`<div class="wrow2"><span><span class="eyebrow">Water</span><b>${wv} <small>of ${wg} glasses</small></b></span><span class="row"><button class="icon round" data-water="-1" data-wd="${fDate}" aria-label="Remove a glass" ${wv?"":"disabled"}>−</button><button class="icon round pri" data-water="1" data-wd="${fDate}" aria-label="Add a glass">+</button></span></div>`}
-   ${done.length?nutrientsHTML(done,tot):""}
+   ${future?"":`<div class="wrow2"><span><span class="eyebrow">Water</span><b>${wv} <small>of ${wg} oz</small></b></span><span class="row"><button class="icon round" data-water="-8" data-wd="${fDate}" aria-label="Remove 8 ounces" ${wv?"":"disabled"}>−</button><button class="chip" data-water="16" data-wd="${fDate}">+16</button><button class="icon round pri" data-water="8" data-wd="${fDate}" aria-label="Add 8 ounces">+8</button></span></div>`}
+   <button class="nlink" data-go="nday"><span><span class="eyebrow">Full nutrition</span><span class="sync">Macro chart, vitamins, minerals, and more</span></span>${CHEV}</button>
    ${MEALS.map(([m,lab])=>{ const es=ents.filter(e=>e.meal===m), mt=es.filter(e=>!e.plan).reduce((a,e)=>addN(a,entryN(e)),ZERO);
      const pm=G&&G.pm&&es.length?`<span class="pmeal${mt.p>=G.pm?" ok":""}">Protein ${r0(mt.p)} / ${G.pm} g${mt.p>=G.pm?" ✓":""}</span>`:"";
      return `<div class="meal"><div class="meal-h"><h3>${lab}</h3><span class="mt"><b>${r0(mt.kcal)} cal</b>${es.length?macLine(mt):""}${pm}</span></div>
@@ -2237,14 +2284,14 @@ function renderHome(){
   else camp=`<div class="card hcamp"><div><span class="eyebrow">Today · 44 min · ${typeLab}</span><h3>${esc(d.p)}</h3><span class="sync">${esc(FMT_NAME[c.fmt||"rounds"])} · ${c.st.length} moves · <button class="linkbtn inl" id="homePrev" aria-expanded="${homePrev}">${homePrev?"Hide preview":"Preview"}</button></span></div><button class="btn pri" id="homeStart">Start</button></div>`
     +(homePrev?`<div class="camp inprev" id="homeCamp">${campBlocks(t)}<button class="collapse" id="homeCollapse"><svg viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></svg>Collapse preview</button></div>`:"");
   const ks=Object.keys(bw).sort(), w=bw[today], wk=ks.filter(k=>k<=addDays(today,-7)), wchg=w!=null&&wk.length?r1(w-bw[wk[wk.length-1]]):null;
-  const wv=water[today]||0, wg=waterGoal();
+  const wv=wOz(today), wg=waterGoal();
   $("#home").innerHTML=`
    <div class="greet"><span class="eyebrow">${new Date().toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"})}</span><h2>${greeting()}${PROF().name?", "+esc(PROF().name):""}</h2></div>
    ${uses("food")?food:""}
    ${uses("workouts")?camp:""}
    <div class="tiles">
      ${uses("body")?`<button class="tile tbtn" data-go="body"><small>Weight</small>${w!=null?`<b>${w}</b><small>${wchg!=null?`${wchg>0?"+":""}${wchg} lb this week`:"lb today"}</small>`:`<span class="t2">Log today</span><small>Tap to weigh in</small>`}</button>`:""}
-     ${uses("food")?`<div class="tile"><small>Water</small><b>${wv} <span class="of">/ ${wg}</span></b><div class="row" style="justify-content:space-between"><small>glasses</small><button class="icon round pri sm" data-water="1" aria-label="Add a glass of water">+</button></div></div>`:""}
+     ${uses("food")?`<div class="tile"><small>Water</small><b>${wv} <span class="of">/ ${wg} oz</span></b><div class="row" style="justify-content:space-between"><small>tap to add 8 oz</small><button class="icon round pri sm" data-water="8" aria-label="Add 8 ounces of water">+</button></div></div>`:""}
    </div>
    ${checkinCard()}
    ${backupNudge()}`;
@@ -2258,7 +2305,7 @@ function weekStats(monKey){
   const wAvg=ds=>{ const v=ds.map(d=>bw[d]).filter(x=>x!=null); return v.length?v.reduce((a,b)=>a+b,0)/v.length:null; };
   const w1=wAvg(days), w0=wAvg(prev), goalsAvg=(()=>{ const g=logged.map(goalsFor).filter(Boolean); return g.length?g.reduce((a,x)=>a+x.kcal,0)/g.length:null; })();
   const tc={}; days.forEach(d=>tagsFor(d).forEach(t=>tc[t]=(tc[t]||0)+1));
-  const wat=days.map(d=>water[d]||0).filter(Boolean);
+  const wat=days.map(wOz).filter(Boolean);
   return {from:days[0],to:days[6],logged:logged.length,kcal:avg("kcal"),p:avg("p"),goal:goalsAvg,w1,w0,chg:w1!=null&&w0!=null?w1-w0:null,camps:log.filter(l=>l.date>=days[0]&&l.date<=days[6]).length,tags:tc,water:wat.length?wat.reduce((a,b)=>a+b,0)/wat.length:null};
 }
 function checkinLines(s){
@@ -2266,7 +2313,7 @@ function checkinLines(s){
   if(uses("food")) L.push(["Food",s.logged?`Logged ${s.logged} of 7 days · avg ${r0(s.kcal).toLocaleString()} cal${s.goal?` (goal ${r0(s.goal).toLocaleString()})`:""} · ${r0(s.p)} g protein`:"No food logged"]);
   if(uses("body")) L.push(["Weight",s.w1!=null?`Avg ${r1(s.w1)} lb${s.chg!=null?` · ${s.chg>0?"+":""}${r1(s.chg)} vs the week before`:""}`:"No weigh-ins"]);
   if(uses("workouts")) L.push(["Camps",`${s.camps} done`]);
-  if(uses("food")&&s.water!=null) L.push(["Water",`Avg ${r1(s.water)} glasses on days you tracked`]);
+  if(uses("food")&&s.water!=null) L.push(["Water",`Avg ${r0(s.water)} oz on days you tracked`]);
   const tg=Object.entries(s.tags).filter(([t])=>t!=="Period"||periodOn()); if(tg.length) L.push(["Tags",tg.map(([t,n])=>`${t} ${n}d`).join(" · ")]);
   return L;
 }
@@ -2368,11 +2415,11 @@ function renderCal(){
 }
 function renderCalLog(){
   const items=log.filter(l=>l.date===calSel), label=parseDk(calSel).toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"});
-  const fe=eaten(calSel), t=dayTot(calSel), G=goalsFor(calSel), w=bw[calSel], wv=water[calSel];
+  const fe=eaten(calSel), t=dayTot(calSel), G=goalsFor(calSel), w=bw[calSel], wv=wOz(calSel);
   const day=`<div class="lc dayc"><span class="eyebrow">${esc(label)}</span>
     ${uses("food")?"":"<!--"}<div class="cil"><span>Food</span><span>${fe.length?`${r0(t.kcal).toLocaleString()}${G?` / ${G.kcal.toLocaleString()}`:""} cal · P ${r0(t.p)} C ${r0(t.c)} F ${r0(t.f)}`:"Nothing logged"}</span></div>${uses("food")?"":"-->"}
     ${uses("body")?`<div class="cil"><span>Weight</span><span>${w!=null?w+" lb":"–"}</span></div>`:""}
-    ${wv?`<div class="cil"><span>Water</span><span>${wv} glasses</span></div>`:""}
+    ${wv?`<div class="cil"><span>Water</span><span>${wv} oz</span></div>`:""}
     <span class="eyebrow" style="margin-top:6px">Tags</span>${tagEditor(calSel)}
     ${uses("food")?`<div class="row"><button class="btn ghost" data-fopen="${calSel}">Open food log</button></div>`:""}</div>`;
   const ws=items.map(l=>`<div class="lc" data-id="${l.id}">
@@ -2392,12 +2439,60 @@ function renderCalLog(){
 function periodRects(x0,x1,X,T,H,B,W,L,R){ if(!periodOn()) return ""; const w=Math.max(3,(W-L-R)/Math.max(1,x1-x0)); return Object.keys(tags).filter(k=>tags[k].includes("Period")).map(k=>{ const x=dayNum(k); return x<x0||x>x1?"":`<rect x="${(X(x)-w/2).toFixed(1)}" y="${T}" width="${w.toFixed(1)}" height="${H-T-B}" fill="var(--soft)"/>`; }).join(""); }
 
 
+/* ---------- full nutrition for a day ---------- */
+let foodNutr=LSX.get("413.food.nutr",{});
+const NDV={"Protein|g":50,"Fat|g":78,"Saturated fat|g":20,"Cholesterol|mg":300,"Sodium|mg":2300,"Carbs|g":275,"Fiber|g":28,"Added sugars|g":50,"Vitamin D|µg":20,"Calcium|mg":1300,"Iron|mg":18,"Potassium|mg":4700,"Vitamin A|µg":900,"Vitamin C|mg":90,"Vitamin E|mg":15,"Vitamin K|µg":120,"Thiamin|mg":1.2,"Riboflavin|mg":1.3,"Niacin|mg":16,"Vitamin B6|mg":1.7,"Folate|µg":400,"Vitamin B12|µg":2.4,"Biotin|µg":30,"Pantothenic acid|mg":5,"Phosphorus|mg":1250,"Iodine|µg":150,"Magnesium|mg":420,"Zinc|mg":11,"Selenium|µg":55,"Copper|mg":0.9,"Manganese|mg":2.3,"Chromium|µg":35,"Molybdenum|µg":45,"Chloride|mg":2300,"Choline|mg":550};
+const NLIMIT=new Set(["Saturated fat|g","Cholesterol|mg","Sodium|mg","Added sugars|g","Trans fat|g"]);
+function nClean(name){
+  const map=[[/^Total lipid \(fat\)$/i,"Fat"],[/^Carbohydrate, by difference$|^Carbohydrate$/i,"Carbs"],[/^Fiber, total dietary$|^Fiber$/i,"Fiber"],[/^Sugars, total.*$|^Total Sugars$|^Sugars$/i,"Sugars"],[/^Sugars, added$|^Added sugars$/i,"Added sugars"],
+    [/^Fatty acids, total saturated$|^Saturated fat$/i,"Saturated fat"],[/^Fatty acids, total monounsaturated$|^Monounsaturated fat$/i,"Monounsaturated fat"],[/^Fatty acids, total polyunsaturated$|^Polyunsaturated fat$/i,"Polyunsaturated fat"],[/^Fatty acids, total trans$|^Trans fat$/i,"Trans fat"],
+    [/^Vitamin C, total ascorbic acid$/i,"Vitamin C"],[/^Vitamin A, RAE$/i,"Vitamin A"],[/^Vitamin D \(D2 \+ D3\)$/i,"Vitamin D"],[/^Vitamin E \(alpha-tocopherol\)$/i,"Vitamin E"],[/^Vitamin K \(phylloquinone\)$/i,"Vitamin K"],[/^Folate, DFE$/i,"Folate"],[/^Choline, total$/i,"Choline"],[/^Vitamin B-6$/i,"Vitamin B6"],[/^Vitamin B-12$/i,"Vitamin B12"],[/^Vitamin b12$/i,"Vitamin B12"],[/^Vitamin b6$/i,"Vitamin B6"],[/^Pantothenic acid$/i,"Pantothenic acid"],[/^Vitamin pp$/i,"Niacin"],[/^Vitamin b1$/i,"Thiamin"],[/^Vitamin b2$/i,"Riboflavin"],[/^Vitamin b9$/i,"Folate"]];
+  for(const [re,to] of map) if(re.test(name)) return to;
+  return name.replace(/, [A-Z][a-z]?$/,"");
+}
+function nGroup(n){
+  if(/^(Protein|Fat|Carbs|Fiber|Sugars|Added sugars|Saturated fat|Monounsaturated fat|Polyunsaturated fat|Trans fat|Cholesterol|Alcohol.*|Starch)$/i.test(n)) return 0;
+  if(/^(Calcium|Iron|Magnesium|Phosphorus|Potassium|Sodium|Zinc|Copper|Manganese|Selenium|Fluoride|Iodine|Chromium|Molybdenum|Chloride|Salt)$/i.test(n)) return 1;
+  if(/^Vitamin|Thiamin|Riboflavin|Niacin|Pantothenic|Folate|Folic|Choline|Biotin|Betaine|Carotene|Lycopene|Lutein|Retinol|Tocopherol|Cryptoxanthin|Menaquinone|Dihydrophylloquinone/i.test(n)) return 2;
+  return 3;
+}
+const nFmt=(v,u)=>{ const a=Math.abs(v); return (a>=100?Math.round(v).toLocaleString():a>=10?r1(v):a>=1?Math.round(v*10)/10:Math.round(v*100)/100)+" "+u; };
+function dayNutrients(d){
+  const ents=eaten(d), tot={}; let full=0;
+  const add=(key,v)=>{ const [nm,u]=key.split("|"), cn=nClean(nm), k=cn+"|"+u; tot[k]=(tot[k]||0)+v; };
+  ents.forEach(e=>{ if(e.quick) return; const m=e.food.all||foodNutr[e.food.id]; if(m){ full++; Object.entries(m).forEach(([k,v])=>add(k,v*e.g/100)); }
+    else { const n=nutr(e.food,e.g); [["Saturated fat|g","sat"],["Sodium|mg","na"],["Potassium|mg","k"],["Calcium|mg","ca"],["Iron|mg","fe"],["Vitamin D|µg","vd"],["Cholesterol|mg","chol"],["Fiber|g","fib"],["Sugars|g","sug"]].forEach(([k,x])=>{ if(e.food.per&&e.food.per[x]!=null) tot[k]=(tot[k]||0)+n[x]; }); } });
+  ["Vitamin A|iu","Vitamin D|iu","Vitamin E|iu"].forEach(k=>{ const base=k.split("|")[0]; if(Object.keys(tot).some(x=>x.startsWith(base+"|")&&x!==k)) delete tot[k]; });
+  return {tot,full,n:ents.length,quick:ents.filter(e=>e.quick).length};
+}
+function renderNday(){
+  const today=todayK(), G=goalsFor(fDate), tot=dayTot(fDate), N=dayNutrients(fDate);
+  const dLab=fDate===today?"Today":fDate===addDays(today,-1)?"Yesterday":parseDk(fDate).toLocaleDateString(undefined,{weekday:"long",month:"short",day:"numeric"});
+  const kc=tot.p*4+tot.c*4+tot.f*9, pc=k=>kc?Math.round(k/kc*100):0, act={p:pc(tot.p*4),c:pc(tot.c*4),f:pc(tot.f*9)}, gp=G?pctOf(G):null;
+  const split=(lab,o)=>`<div class="split"><span class="sl">${lab}</span><div class="sbar">${o.p?`<i class="sp" style="width:${o.p}%"><b>${o.p}%</b></i>`:""}${o.c?`<i class="sc" style="width:${o.c}%"><b>${o.c}%</b></i>`:""}${o.f?`<i class="sf" style="width:${o.f}%"><b>${o.f}%</b></i>`:""}</div></div>`;
+  const mrow=(l,v,g)=>`<div class="nrow2"><span>${l}</span><span class="nv">${r0(v)} g${g?` <small>/ ${g} g</small>`:""}</span>${g?`<div class="mbar${v>g*1.02?" over":""}"><i style="width:${Math.min(100,v/g*100)}%"></i></div>`:""}</div>`;
+  const rows=Object.entries(N.tot).filter(([k])=>!/^(Protein|Fat|Carbs)\|/.test(k)).map(([k,v])=>{ const [n,u]=k.split("|"); return {k,n,u,v,g:nGroup(n),dv:NDV[k]}; });
+  const GRP=["Fats, fiber & sugar","Minerals","Vitamins","Other"];
+  const list=GRP.map((gl,gi)=>{ const rs=rows.filter(r=>r.g===gi).sort((a,b)=>(b.dv?1:0)-(a.dv?1:0)||a.n.localeCompare(b.n)); if(!rs.length) return "";
+    const body=rs.map(r=>{ const pct=r.dv?r.v/r.dv*100:null, lim=NLIMIT.has(r.k); return `<div class="nrow2"><span>${esc(r.n)}</span><span class="nv">${nFmt(r.v,r.u)}${pct!=null?` <small>${Math.round(pct)}%${lim?" of max":""}</small>`:""}</span>${pct!=null?`<div class="mbar${lim&&pct>100?" over":""}"><i style="width:${Math.min(100,pct)}%"></i></div>`:""}</div>`; }).join("");
+    return gi===3?`<details class="nutr ngrp"><summary><span class="eyebrow">${gl}</span><span class="sync">${rs.length} more</span></summary><div class="nlist">${body}</div></details>`:`<div class="card ngrp"><span class="eyebrow">${gl}</span><div class="nlist">${body}</div></div>`; }).join("");
+  $("#ndBody").innerHTML=`<div class="daynav"><button class="icon" data-nd="-1" aria-label="Previous day"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><span class="dlab">${esc(dLab)}</span><button class="icon" data-nd="1" aria-label="Next day" ${fDate>=today?"disabled":""}><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button></div>
+   <div class="card ngrp"><div class="kleft"><div><span class="eyebrow">Calories</span><b>${r0(tot.kcal).toLocaleString()}</b></div><div class="kmeta">${G?`<span>of ${G.kcal.toLocaleString()} goal</span><span><b>${Math.round(tot.kcal/G.kcal*100)}%</b></span>`:""}</div></div>${G?bar(tot.kcal,G.kcal):""}
+     <span class="eyebrow" style="margin-top:12px">Where your calories came from</span>
+     ${kc?split("Eaten",act):`<p class="sync" style="margin:4px 0">Nothing logged yet.</p>`}${gp?split("Goal",gp):""}
+     <div class="leg2"><span><i class="sp"></i>Protein</span><span><i class="sc"></i>Carbs</span><span><i class="sf"></i>Fat</span></div>
+     <div class="nlist" style="margin-top:12px">${mrow("Protein",tot.p,G&&G.p)}${mrow("Carbs",tot.c,G&&G.c)}${mrow("Fat",tot.f,G&&G.f)}</div></div>
+   ${list||`<p class="sync">Log foods from search or scan to see vitamins and minerals here.</p>`}
+   <p class="sync">Full details come from ${N.full} of ${N.n} item${N.n===1?"":"s"} today.${N.quick?` Quick adds only have calories and macros.`:""} Foods logged before this update show the nutrients they had. Percentages use the FDA daily values on nutrition labels; "of max" means a limit, not a target.</p>`;
+}
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-nd]"); if(!b) return; const n=addDays(fDate,+b.dataset.nd); if(n<=todayK()){ fDate=n; renderNday(); } });
+
 /* ================= PROFILE & FEATURES ================= */
 const DB_ALL=[2,3,5,8,10,12,15,20,25,30,35,40,45,50];
 let profile=LSX.get("413.profile",null);
 const PROF=()=>profile||{name:"Nat",use:{workouts:true,food:true,body:true},sex:"f",period:true};
 const uses=k=>!!(PROF().use||{})[k];
-const VIEW_NEEDS={week:"workouts",favs:"workouts",day:"workouts",moves:"workouts",protocols:"workouts",workouts:"workouts",finishers:"workouts",swaps:"workouts",food:"food",goals:"food",body:"body"};
+const VIEW_NEEDS={nday:"food",week:"workouts",favs:"workouts",day:"workouts",moves:"workouts",protocols:"workouts",workouts:"workouts",finishers:"workouts",swaps:"workouts",food:"food",goals:"food",body:"body"};
 function applyProfile(){
   const p=PROF();
   const show={home:1,week:uses("workouts"),food:uses("food"),body:uses("body"),cal:1};
@@ -2550,7 +2645,7 @@ function reloadAll(){
   state.sel=todayIdx(); favs=LSX.get("homecamp.favs",[]); log=LSX.get("homecamp.log",[]); if(rollWeek()) save();
   flog=LSX.get(K.flog,[]); foods=LSX.get(K.foods,{}); recipes=LSX.get(K.recipes,[]); smeals=LSX.get(K.meals,[]);
   bw=LSX.get(K.bw,{}); bgoal=LSX.get(K.bgoal,null); meas=LSX.get(K.meas,{}); goalHist=LSX.get(GH,[]);
-  tags=LSX.get("413.tags",{}); tagList=LSX.get("413.tagList",tagList); water=LSX.get("413.water",{}); breaks=LSX.get("413.breaks",[]);
+  tags=LSX.get("413.tags",{}); tagList=LSX.get("413.tagList",tagList); water=LSX.get("413.water",{}); waterOz=LSX.get("413.waterOz",{}); breaks=LSX.get("413.breaks",[]); foodNutr=LSX.get("413.food.nutr",{});
   profile=LSX.get("413.profile",null);
   try{ themePref=localStorage.getItem("413.theme")||"auto"; }catch(e){} applyTheme();
   applyProfile(); renderStreak(); if(VIEW_NEEDS[view]&&!uses(VIEW_NEEDS[view])) showView("home"); else refreshView();
